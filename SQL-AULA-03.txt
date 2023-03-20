@@ -1,0 +1,253 @@
+Vimos sobre a restrição ON DELETE e ON UPDATE na chave estrangeira. Sem essa opção, não temos a possibilidade de deletar um registro de uma tabela que recebe apontamento de outra tabela com chave estrangeira. Para permitir exclusão e dar melhor integridade ao banco, podemos setar um valor NULL ou um valor DEFAULT da coluna. Segue comandos:
+
+_____  fk on delete on update _______
+
+create table pedidos (
+	id int IDENTITY(1,1) PRIMARY KEY,
+	data TIMESTAMP NOT NULL,
+	cliente VARCHAR(255) NOT NULL,
+	valor_total NUMERIC NOT NULL DEFAULT 0
+);
+
+# observem a constraint ON DELETE CASCADE ON UPDATE CASCADE na FK
+
+create table pedido_itens (
+	id int IDENTITY(1,1) PRIMARY KEY,
+	pedido_id int,
+	produto_titulo VARCHAR(80) NOT NULL,
+	descricao VARCHAR(255) NOT NULL,
+	valor NUMERIC,
+	FOREIGN KEY (pedido_id) REFERENCES pedidos (id) ON DELETE set null ON UPDATE CASCADE
+);
+
+# inserindo dados na tabela:
+
+INSERT into pedidos ( cliente, valor_total) values ( 'gabriel', 100);
+
+INSERT into pedido_itens (pedido_id, produto_titulo, descricao, valor) values (1, 'chave', 'blablabla', 40) 
+
+
+# deletando o registro com id = 1:
+
+delete from pedidos where id = 1
+
+
+# verificando como ficou a tabela que tinha o id = 1 como valor da chave estrangeira:
+
+select * from pedido_itens
+
+
+
+____ ALTER ____
+
+depois colocamos uma restrição na tabela pedidos definindo a coluna id_pizzas como UNIQUE. Pois sabemos que cada pedido só pode ter uma pizza e uma pizza só podem ser de um pedido. Sem essa restrição seria possível cadastra dois pedidos sobre a mesma pizza.
+
+alter table pedidos 
+add constraint UC_PIZZA_PEDIDOS unique(id_pizzas);
+
+agora podemos até testar isso fazendo um INSERT em pedidos mencionando uma pizza que já tinha um pedido vinculado. 
+
+# para excluir essa constraint fazemos:
+
+ALTER TABLE pedidos
+DROP CONSTRAINT UC_PIZZA_PEDIDOS;
+
+
+
+___ INSERT ____
+
+
+insert into Massas (nome) values ('tradicional'), ('temperada'), ('integral');
+
+insert into Bordas (nome) values ('catupiry');
+insert into Bordas (nome) values ('cheddar'), ('chocolate preto');
+
+insert into Sabores (nome) values ('calabresa'), ('4 queijos'), ('filé'), ('sensação');
+
+insert into Status (nome) values ('Recebido'), ('Em preparação'), ('Concluído'), ('Saiu para entrega');
+
+
+insert into Pizza (id_massas, id_bordas) values (1, 1);
+insert into Pizza_sabores (id_pizzas, id_sabores) values (1, 1);
+insert into pedidos (id_pizzas, id_status) values (1, 1);
+
+
+Façam mais exemplos de inserts...usem criatividade kkk
+
+
+___ exercício 02 ___ :
+
+insert into aluno (nome_aluno, endereco, idade) values ('gabriel', 'rua 1', 28);
+
+# coluna endereco é facultativa, portanto é possível um insert sem mencionar endereco:
+
+insert into aluno (nome_aluno, idade) values ('gabriel', 28), ('joao', 30), ('carlos', 18)
+
+
+insert into professor (graduacao, nome_prof) values ('bacharel em sistemas de informacao', 'gabriel');
+
+insert into professor (graduacao, nome_prof) values ('bacharel em ciências da computacao', 'carlos');
+
+tentem fazer os demais inserts.
+
+
+_____ UPDATE _____
+
+___ exercício 04 ___ :
+
+update aluno
+set idade = 27
+where id = 3
+
+ou 
+
+update aluno
+set idade = 27
+where nome_aluno = 'Luiz Ricardo Soares'
+
+tentem fazer o outro exercício de UPDATE. 
+
+
+
+_____ DELETE ____
+
+# excluindo todos os registros da tabela estreito:
+
+delete from estreito
+
+
+# excluindo o aluno com id = 9 da tabela estreito:
+
+delete from estreito where id = 9
+
+
+# excluindo todos  alunos de Florianópolis da tabela estreito:
+
+delete from estreito where cidade = 'Florianópolis' 
+
+
+____ SELECT ___
+
+
+#### COMANDO SELECT #####
+
+# Listando registro fazendo filtro pelo id (trazendo um registro específico, e não a tabela com todas as linhas)
+
+select * from estreito where id = 3
+
+# listando apenas as colunas especificadas no select. o "*" nos retorna todas as colunas da tabela
+
+select nome from estreito where id = 3
+
+# Listando todos os alunos de Florianópolis
+
+select * from estreito where cidade =  'Florianópolis'
+
+
+# Listando todos os alunos de Florianópolis com idade maior que 25 anos: 
+
+select * from estreito where cidade = 'Florianópolis' and idade > 25
+
+# listando alunos de Florianópolis ou de São José
+
+select * from estreito
+where cidade = 'Florianópolis' or cidade = 'São José'
+
+ou pelo IN : 
+
+select * from estreito
+where cidade in ('Florianópolis', 'São José')
+
+
+# ordenando os registros da tabela pelo nome de forma alfabética
+select * from estreito order by nome asc
+
+# filtro com cláusula like para fitro com string 
+
+select * from estreito where cidade not like 'Flo%'
+select nome from alunos where cidade like 'Flo%'
+
+
+# cláusula between como comparador
+
+select * from pedidos where data_pedido between '01/01/2020' and '28/07/2022'
+
+# mesma coisa que escrever:
+
+select * from pedidos
+where data_pedido >= '20200101' and data_pedido < '20210101'
+
+
+# saber quantos alunos temos na turma (Funções de agregação) :
+
+select count(id) from estreito
+
+# saber a média de idade dos alunos da turma (Funções de agregação) 
+
+select avg(idade) from estreito
+
+
+# select com mais de uma tabela:
+
+select p.id as numPizza, b.nome as nomeBorda, m.nome as nomeMassa
+from pizza p, bordas b, massas m
+where p.id_bordas = b.id and p.id_massas = m.id
+
+
+____ GROUP BY e HAVING ____
+
+
+---- EMPREGADOS
+
+create table empregado (
+	id int identity(1,1),
+	nome varchar(30), 
+	salario int,
+	supervisor varchar(30), 
+	primary key (id)
+);
+
+insert into empregado (nome, salario, supervisor) values ('diogo', 2000, 'carlos'), 
+('gabriel', 5000, 'joao'), ('sérgio', 15000, 'patrick'), ('ana', 7500, 'carlos'), 
+('abigail', 3000, 'joao'), ('joana', 24000, 'patrick'), ('felipe', 2300, 'carlos'), 
+('edson', 1500, 'joao'), ('roberta', 6000, 'patrick');
+
+
+# operadores lógicos AND, OR e NOT
+
+select * from empregado
+where salario > 2000 and supervisor = 'patrick'
+
+# falamos das funções de agregação, como SUM(), COUNT() ETC..
+
+- soma de todos os salários 
+select SUM(salario) from empregados
+
+- quantos empregados na empresa?
+
+select COUNT(id) from empregados
+
+
+# listando o menor, maior e média salarial dos empregados por supervisor que contenham médias salariais maior que 3500 reais
+
+select min(salario), max(salario), avg(salario), supervisor
+from empregado
+group by supervisor
+HAVING avg(salario) > 3500 
+
+# outro exemplo agora no banco da turma:
+
+select count(id), cidade, avg(idade) from estreito
+group by cidade
+having avg(idade) > 30
+
+
+___ exercício 09 ___ :
+
+select avg(idade) from aluno
+
+___ exercício 06 ___ :
+
+select * 
+from aluno
+where idade > 21 and nome_aluno like '%silva%'

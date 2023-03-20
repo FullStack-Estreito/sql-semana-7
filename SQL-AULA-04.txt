@@ -1,0 +1,322 @@
+
+
+____ UPDATE COM FROM ____
+
+# criando uma tabela pedidos_bkp e atualizar apenas a coluna data_pedido com o dado que está na mesma coluna da tabela pedidos 
+
+create table pedidos_bkp ( 
+id int IDENTITY(1,1) PRIMARY KEY, 
+id_pizzas int references Pizza (id), 
+id_status int references Status(id), 
+data_pedido date, 
+pedidos_id int references pedidos(id) ) 
+
+
+# inserindo um registro na tabela criada mas sem informar a coluna data_pedido, pois esse dado iremos pedar da tabela pedidos.
+
+insert into pedidos_bkp (id_pizzas, id_status, pedidos_id) values (1, 1, 1)
+
+# visualizando como ficou a tabela:
+select * from pedidos_bkp
+
+# agora vamos atualizar. Reparem que não informei um dado de forma explícita. Ao invés disso, falamos para o SQL que queremos o valor que está na coluna data_pedido da tabela pedidos. E por estarmos invocando uma segunda tabela, temos que mencioná-la no from. 
+
+update pedidos_bkp
+set data_pedido = pedidos.data_pedido
+from pedidos
+where pedidos.id = pedidos_bkp.pedidos_id
+
+
+____ JOINS ____
+
+# banco com tabela A e B pra fins didáticos. Nesse conjunto de dados conseguiremos ver mais claramente como todos os joins atuam.
+
+create table a (
+id int identity(1,1 ) primary key ,
+nome varchar(20)
+);
+
+create table b (
+id int identity(1,1 ) primary key ,
+nome varchar(20)
+);
+
+insert into a (nome) values ('fernanda'), ('Josefa'), ('Luiz'), ('fernando');
+insert into b (nome) values ('Carlos'), ('Manoel'), ('Luiz'), ('fernando');
+
+
+### EXEMPLO X E Y
+
+create table x (
+pk int, 
+value varchar(2)
+);
+
+create table y (
+pk int, 
+value varchar(2)
+);
+
+insert into x (pk, value) values (1, 'X1'), (10, 'X8'), (2, 'X3'), (3, 'X3'), (4, 'X7'), (5, 'X6'), (6, 'X4'), (7, 'X5');
+insert into y (pk, value) values (1, 'Y1'), (11, 'Y8'), (2, 'Y2'), (3, 'Y3'), (6, 'Y4'), (7, 'Y5'), (8, 'Y6'), (9, 'Y7');
+
+
+# INNER JOIN  - REGISTROS SEMELHANTES EM A E B. OU SEJA, A INTERSECÇÃO, O QUE É COMUM EM AMBOS
+
+select * from a inner join b on a.nome = b.nome
+
+mesma coisa que:
+
+select * from a, b where a.nome = b.nome
+
+# LEFT JOIN  - TODOS OS REGISTROS DA TABELA DA ESQUERDA, TENDO OU NÃO RELACIONAMENTO COM TABELA DA DIREITA. (COMPARE O RESULTADO COM AS TABELAS DE A E B E VEJA AQUELES QUE SÃO COMUNS E OS QUE NÃO SÃO)
+
+select * from a left join b on a.nome = b.nome
+
+
+# RIGHT JOIN  - TODOS OS REGISTROS DA TABELA DA DIREITA TENDO OU NÃO RELACIONAMENTO COM TABELA DA ESQUERDA
+
+select * from a right join b on a.nome = b.nome
+
+# LEFT JOIN EXCLUDENTE - APENAS OS REGISTROS DA ESQUERDA QUE NAO POSSUEM RELACIONAMENTO COM A DIREITA
+
+select * from a left join b on a.nome = b.nome where b.nome is null
+
+
+# RIGHT JOIN EXCLUDENTE - APENAS OS REGISTROS DA DIREITA QUE NAO POSSUEM RELACIONAMENTO COM A ESQUERDA
+
+select * from a right join b on a.nome = b.nome where a.nome is null
+
+
+# FULL JOIN - TODOS OS REGISTROS DE A E B QUE POSSUEM OU NÃO RELACIONAMENTOS
+
+select * from a full outer join b on a.nome = b.nome
+
+
+# FULL JOIN EXCLUDENTE - TODOS OS REGISTROS DE A E B QUE NÃO POSSUEM RELACIONAMENTOS ENTRE SI
+
+select * from a full outer join b on a.nome = b.nome where a.nome is null or b.nome is null
+
+
+
+
+# NO BANCO DA PIZZARIA, FIZEMOS OS SEGUINTES JOINS:
+
+
+-- padrão ANSI de joins em SQL
+select p.id as numPizza, b.nome as nomeBorda, m.nome as nomeMassa
+from pizza p inner join massas m on p.id_massas = m.id
+inner join bordas b on p.id_Bordas = b.id
+
+select * 
+from bordas full join pizza on pizza.id_Bordas = bordas.id
+
+-- TODOS OS STATUS QUE TEM OU NÃO PEDIDOS ASSOCIADOS.
+select *
+from pedidos right join status on status.id = pedidos.id_status
+
+
+-- DADO UM NUMERO DE PEDIDO, SABER O NUMERO DA PIZZA, A BORDA, MASSA E SABORES.
+select *
+from pedidos inner join pizza on pedidos.id_pizzas = pizza.id
+inner join Bordas on pizza.id_Bordas = bordas.id
+inner join massas on pizza.id_massas = massas.id
+inner join Pizza_sabores on Pizza_sabores.id_pizzas = pizza.id
+inner join sabores on Pizza_sabores.id_sabores = sabores.id
+
+
+-- SABORES QUE NAO FORAM VINCULADOS A PIZZA (MESMA COISA DIZER SABORES QUE NAO FORAM ESCOLHIDOS)  (FAZENDO COM RIGHT JOIN)
+select * 
+from pizza inner join Pizza_sabores on pizza.id = Pizza_sabores.id_pizzas 
+right join sabores on Pizza_sabores.id_sabores = sabores.id
+where pizza.id is null
+
+-- SABORES QUE NAO FORAM VINCULADOS A PIZZA (MESMA COISA DIZER SABORES QUE NAO FORAM ESCOLHIDOS)  (FAZENDO COM LEFT JOIN)
+-- OBSERVEM QUE ESSA QUERY NÃO RETORNA O QUE ESTAMOS BUSCANDO. TUDO PELA ORDEM DOS JOINS QUE ESTÃO ACONTECENDO. RODEM CADA JOIN POR VEZ E TENTEM OBSERVAR PORQUE O RETORNO É DIFERENTE DO ESPERADO. 
+select *
+from sabores 
+left join pizza_sabores on sabores.id = pizza_sabores.id_sabores
+inner join pizza on pizza_sabores.id_pizzas = pizza.id
+where pizza.id is null
+
+-- MODO CORRETO PARA RETORNAR SABORES QUE NAO FORAM VINCULADOS A PIZZA ATRAVÉS DE UM LEFT JOIN :
+
+select *
+from sabores as s left join 
+(select pz.id, pzs.id_sabores from pizza as pz inner join pizza_sabores as pzs on pz.id = pzs.id_pizzas)
+AS p on s.id = p.id_sabores
+where p.id is null
+
+
+MATERIAL COMPLEMENTAR SOBRE ESSA ORDEM DOS JOINS:
+
+https://gustavomaiaaguiar.wordpress.com/2009/03/26/outer-join-com-mais-de-duas-tabelas-sera-que-esta-mesmo-%E2%80%9Ccerto%E2%80%9D/
+
+https://www.freecodecamp.org/portuguese/news/tutorial-de-joins-em-sql-cross-join-full-outer-join-inner-join-left-join-e-right-join/
+
+
+
+
+___ UNION, INTERCEPT, EXCEPT ____
+
+recomendo que façam uma breve pesquisa sobre a diferenca de union e join!!
+
+#### UNION ###  (as tabelas em union devem ter mesmo número de colunas, mesma ordem das colunas e mesmo tipo de dados para cada coluna)
+
+# todos os registros de a e b fazendo um DISTINCT com repetidos: 
+
+select * from a
+union
+select * from b
+
+#### INTERSECT ### (as tabelas em union devem ter mesmo número de colunas, mesma ordem das colunas e mesmo tipo de dados para cada coluna)
+
+# todos os registros comuns de a e b:
+
+select * from a
+intersect
+select * from b
+
+#### EXCEPT ### (as tabelas em union devem ter mesmo número de colunas, mesma ordem das colunas e mesmo tipo de dados para cada coluna)
+
+# todos os registros de a que não possuem relacionamento com b:
+
+select * from a
+except
+select * from b
+
+
+___ MERGE __
+
+
+CREATE TABLE SourceTable
+(
+  Col1 INT NOT NULL PRIMARY KEY,
+  Col2 VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE TargetTable
+(
+  Col1 INT NOT NULL PRIMARY KEY,
+  Col2 VARCHAR(20) NOT NULL
+);
+
+INSERT INTO SourceTable (Col1, Col2)
+VALUES
+(2, 'Source2'),
+(3, 'Source3'),
+(4, 'Source4');
+
+INSERT INTO TargetTable (Col1, Col2)
+VALUES
+(1, 'Target1'),
+(2, 'Target2'),
+(3, 'Target3');
+
+
+select * from SourceTable
+select * from TargetTable
+
+MERGE INTO TargetTable as TGT
+USING SourceTable as SRC ON TGT.Col1 = SRC.Col1
+-- se encontrar o id do source no target, faça atualização do registro
+WHEN MATCHED
+  THEN UPDATE SET Col2 = SRC.Col2
+-- se não encontrar o id do source no target, insira o registro
+WHEN NOT MATCHED
+  THEN INSERT (Col1, Col2)
+  VALUES (SRC.Col1, SRC.Col2)
+-- se não encontrar o id que está no target mas não tem no source, delete
+when not matched by source then
+delete;
+
+
+____ VIEW ___
+
+# criando uma view
+
+create view pedidos_concluidos
+as
+select pedidos.id as numPedido, pedidos.id_pizzas as numPizza, status.nome  
+from pedidos inner join status on pedidos.id_status = status.id
+where status.nome = 'concluído'
+
+
+# listando todo o conteudo da view
+
+select * from pedidos_concluidos
+
+
+
+___ STORED PROCEDURE ______
+
+
+# criando o procedimento armazenado
+
+create procedure pesquisa
+@sabor varchar(20)
+as
+select pizza_sabor.pizzas_id, sabores.nome
+from pizza_sabor, sabores
+where pizza_sabor.sabores_id = sabores.id and sabores.nome = @sabor
+
+
+# chamando procedimento criado
+exec pesquisa @sabor = 'calabresa'
+
+# criando procedimento para inserção de novos sabores. 
+
+create procedure insereSabor
+@sabor varchar(50)
+as 
+insert into sabores (nome) values (@sabor)
+
+# executando procedure
+
+exec insereSabor @sabor = '4 queijos'
+
+
+
+____ FUNCAO DE DATA ____ 
+
+# somando um valor a data
+
+select dateadd(day, 2, '27/07/2022')
+select dateadd(day, 2, data_pedido) from pedidos
+
+# retornando apenas uma parte da data
+
+select datepart(day, data_pedido) from pedidos
+
+# resultado de diferenças entre datas
+
+select datediff( day, '25/07/2022', '27/07/2022') 
+
+
+_____ FUNÇÃO STRING ______
+
+
+select substring (nome, 1, 4), cidade from alunos
+
+select replace (cidade, 'nópolis', 'xxx' ), cidade from alunos
+
+# retorna tamanho de uma string
+
+SELECT len(nome), nome from alunos where id = 1
+
+# retorna posição que foi identificado o padrão %rianópo%
+
+select PATINDEX('%rianópo%', cidade) from alunos
+
+# usando função como parâmetro de outra função
+
+select  substring (cidade,  1, PATINDEX('%rianópo%', cidade)  ) from alunos where cidade = 'Florianópolis'
+
+# funções de conversão 
+
+select convert(varchar(10), data_pedido, 103) from pedidos
+select cast( data_pedido as varchar) + ' data' from pedidos
+
+
+
+

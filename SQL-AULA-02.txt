@@ -1,0 +1,182 @@
+## BANCO DE DADOS PIZZARIA ##
+
+# CRIANDO O BANCO
+create database pizzaria
+
+# CRIANDO TABELAS
+
+create table Massas (
+  id int identity(1,1) primary key,
+  nome varchar(50) not null
+);
+
+create table Bordas (
+ id int identity(1,1), 
+ nome varchar(50) not null,
+ primary key (id)
+);
+
+create table Sabores (
+ id int identity(1,1), 
+ nome varchar(50) not null,
+ primary key (id)
+);
+
+create table Status (
+ id int identity(1,1), 
+ nome varchar(50) not null,
+ primary key (id)
+);
+
+create table Pizza (id int identity(1,1) primary key, id_massas int not null references Massas(id), 
+id_Bordas int not null references Bordas(id)
+);
+
+create table Pizza_sabores (
+ id int identity(1,1) primary key, 
+ id_pizzas int not null , 
+ id_sabores int not null, 
+ foreign key (id_pizzas) references Pizza(id), 
+ constraint fk_pzs_sabores foreign key (id_sabores) references Sabores(id)
+);
+
+create table Pedidos (
+ id int identity(1,1) primary key, 
+ id_pizzas int not null constraint fk_pedidos_pizza foreign key (id_pizzas) references Pizza(id), 
+ id_status int not null references Status(id)
+);
+
+
+
+### BANCO DE DADOS DA TURMA ###
+
+create database fullstack;
+
+create table  estreito (
+id int identity(1,1) constraint PK_ESTREITO primary key,
+nome VARCHAR(100) not null, 
+idade int not null constraint verifica_idade check (idade >= 18),  
+cidade varchar(100), 
+ocupacao varchar(100) default 'Estudante'
+);
+
+nesse exemplo criamos uma restrição de verifica_idade onde só é possível inserir alunos com idade maior que 18 anos. Podem confirmar fazendo os comandos INSERT ;)
+
+Também setamos uma ocupação padrão como "Estudante" caso essa coluna não receba nenhuma inserção. Testaremos mais pra frente. 
+
+
+
+### inserindo dados de vocês na tabela estreito. Voltaremos a falar sobre INSERT com mais detalhes.
+
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Rodrigo Rodrigues', 26, 'Florianópolis', 'Estagiário');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Luis Zielke', 33, 'Florianópolis', 'Analista Fiscal');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Rogério Mattos', 45, 'Gravataí', 'Tecnólogo em Eletrônica');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Djamille Vieira', 38, 'São José', 'Formada Logística + Estudante dev Back-End e FullStack');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Diego Alegre', 26, 'Florianópolis', 'Psicólogo');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Soraia Cunha', 30, 'Florianópolis', 'Analista de Marketing');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Anna Oliveira', 23, 'Florianópolis', 'CX');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Tiago Egas', 32, 'Criciúma', 'Help Desk');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Rafael da Silva Pereira', 31, 'Florianópolis', 'Estagiário Java');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Márcio Oliveira', 42, 'Uruguaiana', 'Eletricista');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Milene Moraes', 22, 'São José', 'Assistente de Remuneração');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Victoria Prado', 26, 'Florianópolis', 'Especialista de Produto');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Guilherme da Costa Alves', 22, 'Florianópolis', 'Estudante');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Fernando Aurelio', 39, 'Florianópolis', 'Empreendedor');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Cesar Telski', 28, 'Florianópolis', 'Produto');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Leonardo Machado', 20, 'São José', 'Aluno do FloripaMaisTec');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Bruno Bestetti', 31, 'Florianópolis', 'Estudante');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Fernando More', 26, 'Florianopolis', 'Digitador');
+
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('Angelo Souza', 55, 'Florianopolis', 'Analista de Sistemas');
+
+testando idade menor que 18:
+INSERT INTO estreito (nome, idade, cidade, ocupacao) values ('teste', 16, 'Florianopolis', 'dev');
+
+testando insert sem mencionar ocupação:
+INSERT INTO estreito (nome, idade, cidade) values ('teste2', 55, 'Florianopolis');
+
+listando toda nossa tabela:
+select * from estreito;
+
+
+### RESOLUÇÃO EXERCÍCIO M1S06 Ex 4 (parte modelagem física): 
+
+create table categoria (
+id int identity(1,1) primary key, 
+cod_cat varchar (50) not null, 
+descricao varchar (50) not null
+);
+
+create table livros (
+id int identity(1,1) primary key, 
+isbn varchar (50) not null, 
+titulo varchar (50) not null, 
+editora varchar (50) not null, 
+autor varchar (50) not null,
+id_categoria int references categoria(id)
+);
+
+create table autores (
+id int primary key, 
+nome varchar (50) not null, 
+nacionalidade varchar (50) not null
+);
+
+create table autores_livros (
+id int primary key,
+id_autores references autores(id),
+id_livros references livros(id)
+);
+
+
+### RESOLUÇÃO EXERCÍCIO M1S07 - EX 03:
+
+
+create table produto (
+id int identity(1,1) primary key, 
+nome varchar(30) not null, 
+preco int check (preco > 50) , 
+tamanho varchar(3)  
+);
+
+create table pedidos (
+id int identity(1,1) primary key,
+data_pedido date not null, 
+forma_pagamento varchar(20) not null,
+logradouro varchar(20) not null, 
+numero int not null, 
+cidade varchar(20) not null, 
+uf char(2) not null, 
+pais varchar(20) not null
+);
+
+create table produto_pedidos (
+id int identity(1,1)  primary key,
+id_produto int references produto (id), 
+id_pedidos int references pedidos (id)
+);
+
+
+
+
+
+
+
